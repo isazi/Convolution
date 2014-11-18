@@ -28,16 +28,14 @@ template< typename T > void convolution(const unsigned int padding, const unsign
 
 // Implementations
 template< typename T > void convolution(const unsigned int padding, const unsigned int width, const unsigned int height, const unsigned int filterWidth, const unsigned int filterHeight, const std::vector< T > & input, std::vector< T > & output, const std::vector< T > & filter) {
-  const unsigned int verticalBorder = filterHeight / 2;
-  const unsigned int horizontalBorder = filterWidth / 2;
 
   for ( unsigned int x = 0; x < width; x++ ) {
     for ( unsigned int y = 0; y < height; y++ ) {
       T sum = 0;
 
-      for (unsigned int fX = x - horizontalBorder; fX < x + horizontalBorder; fX++ ) {
-        for ( unsigned int fY = y - verticalBorder; fY < y + verticalBorder; fY++ ) {
-          sum += input[((x + horizontalBorder) * isa::utils::pad(width + (2 * horizontalBorder), padding)) + (y + verticalBorder)] * filter[(fX * filterWidth) + fY];
+      for (unsigned int fX = x; fX < x + filterWidth; fX++ ) {
+        for ( unsigned int fY = y; fY < y + filterHeight; fY++ ) {
+          sum += input[(fX * isa::utils::pad(width + (2 * (filterWidth - 1)), padding)) + fY] * filter[((fX - x) * filterWidth) + (fY - y)];
         }
       }
       sum /= filterWidth * filterHeight;
