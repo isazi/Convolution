@@ -52,18 +52,40 @@ std::string * getConvolutionOpenCL(const bool local, const unsigned int padding,
   // Begin kernel's template
   *code = "__kernel void convolution(__global const " + dataType + " * const restrict input, __global " + dataType + " * const restrict output, __global const " + dataType + " * const restrict filter) {\n"
     "const unsigned int x = (get_group_id(0) * " + isa::utils::toString(nrColumnsPerBlock * nrColumnsPerThread) + ") + get_local_id(0);\n"
-    "const unsigned int y = (get_group_id(1) * " + isa::utils::toString(nrRowsPerBlock * nrRowsPerThread) + ") + get_local_id(1);\n"
-    "<%DEF_SUMS%>"
+    "const unsigned int y = (get_group_id(1) * " + isa::utils::toString(nrRowsPerBlock * nrRowsPerThread) + ") + get_local_id(1);\n";
+  if ( local ) {
+    *code += "unsigned int globalItem = 0;\n"
+      "unsigned int localItem = 0;\n"
+      "__local "+ dataType + " localFilter[" + isa::utils::toString(filterWidth * filterHeight) + "];\n";
+  }
+  *code += "<%DEF_SUMS%>"
+    "globalItem = (get_local_id(1) * " + isa::utils::toString(nrColumnsPerBlock) + ") + get_local_id(0);\n"
+    "localItem = (get_local_id(1) * " + isa::utils::toString(nrColumnsPerBlock) + ") + get_local_id(0);\n"
+    "while ( localItem < " + isa::utils::toString(filterWidth * filterHeight) + " ) {\n"
+    "localFilter[localItem] = filter[globalItem];\n"
+    "globalItem += " + isa::utils::toString(nrColumnsPerBlock * nrRowsPerBlock) + ";\n"
+    "localItem += " + isa::utils::toString(nrColumnsPerBlock * nrRowsPerBlock) + ";\n"
+    "}\n"
+    "barrier(CLK_LOCAL_MEM_FENCE);\n"
     "<%SUMS%>"
     "<%AVERAGE%>"
     "<%STORE%>"
     "}\n";
   std::string defSumsTemplate = dataType + " sumX<%XNUM%>Y<%YNUM%> = 0;\n";
-  std::string sumsTemplate = "for ( unsigned int fY = (y + <%YOFFSET%>); fY < (y + <%YOFFSET%>) + " + isa::utils::toString(filterHeight) + "; fY++ ) {\n"
-    "for ( unsigned int fX = (x + <%XOFFSET%>); fX < (x + <%XOFFSET%>) + " + isa::utils::toString(filterWidth) + "; fX++ ) {\n"
-    "sumX<%XNUM%>Y<%YNUM%> += input[(fY * " + isa::utils::toString(isa::utils::pad(width + (filterWidth - 1), padding)) + ") + fX] * filter[((fY - (y + <%YOFFSET%>)) * " + isa::utils::toString(filterWidth) + ") + (fX - (x + <%XOFFSET%>))];\n"
-    "}\n"
-    "}\n";
+  std::string sumsTemplate;
+  if ( local ) {
+    sumsTemplate = "for ( unsigned int fY = (y + <%YOFFSET%>); fY < (y + <%YOFFSET%>) + " + isa::utils::toString(filterHeight) + "; fY++ ) {\n"
+      "for ( unsigned int fX = (x + <%XOFFSET%>); fX < (x + <%XOFFSET%>) + " + isa::utils::toString(filterWidth) + "; fX++ ) {\n"
+      "sumX<%XNUM%>Y<%YNUM%> += input[(fY * " + isa::utils::toString(isa::utils::pad(width + (filterWidth - 1), padding)) + ") + fX] * localFilter[((fY - (y + <%YOFFSET%>)) * " + isa::utils::toString(filterWidth) + ") + (fX - (x + <%XOFFSET%>))];\n"
+      "}\n"
+      "}\n";
+  } else {
+    sumsTemplate = "for ( unsigned int fY = (y + <%YOFFSET%>); fY < (y + <%YOFFSET%>) + " + isa::utils::toString(filterHeight) + "; fY++ ) {\n"
+      "for ( unsigned int fX = (x + <%XOFFSET%>); fX < (x + <%XOFFSET%>) + " + isa::utils::toString(filterWidth) + "; fX++ ) {\n"
+      "sumX<%XNUM%>Y<%YNUM%> += input[(fY * " + isa::utils::toString(isa::utils::pad(width + (filterWidth - 1), padding)) + ") + fX] * filter[((fY - (y + <%YOFFSET%>)) * " + isa::utils::toString(filterWidth) + ") + (fX - (x + <%XOFFSET%>))];\n"
+      "}\n"
+      "}\n";
+  }
   std::string averageTemplate = "sumX<%XNUM%>Y<%YNUM%> *= " + isa::utils::toString(1.0f / (filterWidth * filterHeight)) + "f;\n";
   std::string storeTemplate = "output[((y + <%YOFFSET%>) * " + isa::utils::toString(isa::utils::pad(width, padding)) + ") + (x + <%XOFFSET%>)] = sumX<%XNUM%>Y<%YNUM%>;\n";
   // End kernel's template
