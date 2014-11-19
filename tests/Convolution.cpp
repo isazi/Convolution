@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
 	// Allocate host memory
   std::vector< dataType > input = std::vector< dataType >((width + (filterWidth - 1)) * (height + (filterHeight - 1)));
   std::vector< dataType > output = std::vector< dataType >(width * height);
-  std::vector< dataType > output_c = std::vector< dataType >(with * height);
+  std::vector< dataType > output_c = std::vector< dataType >(width * height);
   std::vector< dataType > filter = std::vector< dataType >(filterWidth * filterHeight);
   if ( random ) {
     std::srand(time(0));
