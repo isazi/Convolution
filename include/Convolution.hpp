@@ -25,16 +25,18 @@ namespace OpenCL {
 
 // Sequential convolution algorithm
 template< typename T > void convolution(const unsigned int padding, const unsigned int width, const unsigned int height, const unsigned int filterWidth, const unsigned int filterHeight, const std::vector< T > & input, std::vector< T > & output, const std::vector< T > & filter);
+// OpenCL convolution algorithm
+std::string * getConvolutionOpenCL(const bool local, const unsigned int padding, const unsigned int width, const unsigned int height, const unsigned int filterWidth, const unsigned int filterHeight, const unsigned int nrColumnsPerBlock, const unsigned int nrRowsPerBlock, const unsigned int nrColumnsPerThread, const unsigned int nrRowsPerThread, std::string & dataType);
 
 // Implementations
 template< typename T > void convolution(const unsigned int padding, const unsigned int width, const unsigned int height, const unsigned int filterWidth, const unsigned int filterHeight, const std::vector< T > & input, std::vector< T > & output, const std::vector< T > & filter) {
 
-  for ( unsigned int x = 0; x < width; x++ ) {
-    for ( unsigned int y = 0; y < height; y++ ) {
+  for ( unsigned int y = 0; y < height; y++ ) {
+    for ( unsigned int x = 0; x < width; x++ ) {
       T sum = 0;
 
-      for (unsigned int fX = x; fX < x + filterWidth; fX++ ) {
-        for ( unsigned int fY = y; fY < y + filterHeight; fY++ ) {
+      for ( unsigned int fY = y; fY < y + filterHeight; fY++ ) {
+        for (unsigned int fX = x; fX < x + filterWidth; fX++ ) {
           sum += input[(fY * isa::utils::pad(width + (2 * (filterWidth - 1)), padding)) + fX] * filter[((fY - y) * filterWidth) + (fX - x)];
         }
       }
@@ -42,6 +44,73 @@ template< typename T > void convolution(const unsigned int padding, const unsign
       output[(y * isa::utils::pad(width, padding)) + x] = sum;
     }
   }
+}
+
+std::string * getConvolutionOpenCL(const bool local, const unsigned int padding, const unsigned int width, const unsigned int height, const unsigned int filterWidth, const unsigned int filterHeight, const unsigned int nrColumnsPerBlock, const unsigned int nrRowsPerBlock, const unsigned int nrColumnsPerThread, const unsigned int nrRowsPerThread, std::string & dataType) {
+  std::string * code = new std::string();
+
+  // Begin kernel's template
+  *code = "__kernel void convolution(__global const " + dataType + " * const restrict input, __global " + dataType + " * const restrict output, __global const " + dataType + " * const restrict filter) {\n"
+    "const unsigned int x = (get_group_id(0) * " + isa::utils::toString(nrColumnsPerBlock * nrColumnsPerThread) + ") + get_local_id(0);\n"
+    "const unsigned int y = (get_group_id(1) * " + isa::utils::toString(nrRowsPerBlock * nrRowsPerThread) + ") + get_local_id(1);\n"
+    "<%DEF_SUMS%>"
+    "<%SUMS%>"
+    "<%AVERAGE%>"
+    "<%STORE%>"
+    "}\n";
+  std::string defSumsTemplate = dataType + " sumX<%XNUM%>Y<%YNUM%> = 0;\n";
+  std::string sumsTemplate = "for ( unsigned int fY = (y + <%YOFFSET%>); fY < (y + <%YOFFSET%>) + " + isa::utils::toString(filterHeight) + "; fY++ ) {\n"
+    "for ( unsigned int fX = (x + <%XOFFSET%>); fX < (x + <%XOFFSET%>) + " + isa::utils::toString(filterWidth) + "; fX++ ) {\n"
+    "sumX<%XNUM%>Y<%YNUM%> += input[(fY * " + isa::utils::toString(isa::utils::pad(width + (2 * (filterWidth - 1)), padding)) + ") + fX] * filter[((fY - (y + <%YOFFSET%>)) * " + isa::utils::toString(filterWidth) + ") + (fX - (x + <%XOFFSET%>))];\n"
+    "}\n"
+    "}\n";
+  std::string averageTemplate = "sumX<%XNUM%>Y<%YNUM%> *= " + isa::utils::toString(1.0f / (filterWidth * filterHeight)) + "f;\n";
+  std::string storeTemplate = "output[((y + <%YOFFSET%>) * " + isa::utils::toString(isa::utils::pad(width + (filterWidth / 2), padding)) + ") + (x + <%XOFFSET%>)] = sumX<%XNUM%>Y<%YNUM%>;\n";
+  // End kernel's template
+
+  std::string * defSums_s = new std::string();
+  std::string * sums_s = new std::string();
+  std::string * average_s = new std::string();
+  std::string * store_s = new std::string();
+
+  for ( unsigned int y = 0; y < nrRowsPerThread; y++ ) {
+    std::string y_s = isa::utils::toString(y);
+    std::string yOffset_s = isa::utils::toString(y * nrRowsPerBlock);
+
+    for ( unsigned int x = 0; x < nrColumnsPerThread; x++ ) {
+      std::string x_s = isa::utils::toString(x);
+      std::string xOffset_s = isa::utils::toString(x * nrColumnsPerBlock);
+      std::string * temp_s = 0;
+
+      temp_s = isa::utils::replace(&defSumsTemplate, "<%XNUM%>", x_s);
+      temp_s = isa::utils::replace(temp_s, "<%YNUM%>", y_s, true);
+      defSums_s->append(*temp_s);
+      delete temp_s;
+      temp_s = isa::utils::replace(&sumsTemplate, "<%XNUM%>", x_s);
+      temp_s = isa::utils::replace(temp_s, "<%YNUM%>", y_s, true);
+      temp_s = isa::utils::replace(temp_s, "<%XOFFSET%>", xOffset_s, true);
+      temp_s = isa::utils::replace(temp_s, "<%YOFFSET%>", yOffset_s, true);
+      sums_s->append(*temp_s);
+      delete temp_s;
+      temp_s = isa::utils::replace(&averageTemplate, "<%XNUM%>", x_s);
+      temp_s = isa::utils::replace(temp_s, "<%YNUM%>", y_s, true);
+      average_s->append(*temp_s);
+      delete temp_s;
+      temp_s = isa::utils::replace(&storeTemplate, "<%XNUM%>", x_s);
+      temp_s = isa::utils::replace(temp_s, "<%YNUM%>", y_s, true);
+      temp_s = isa::utils::replace(temp_s, "<%XOFFSET%>", xOffset_s, true);
+      temp_s = isa::utils::replace(temp_s, "<%YOFFSET%>", yOffset_s, true);
+      store_s->append(*temp_s);
+      delete temp_s;
+    }
+  }
+
+  code = isa::utils::replace(code, "<%DEF_SUMS%>", *defSums_s, true);
+  code = isa::utils::replace(code, "<%SUMS%>", *sums_s, true);
+  code = isa::utils::replace(code, "<%AVERAGE%>", *average_s, true);
+  code = isa::utils::replace(code, "<%STORE%>", *store_s, true);
+
+  return code;
 }
 
 } // OpenCL
