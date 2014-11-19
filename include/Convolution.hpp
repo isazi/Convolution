@@ -37,7 +37,7 @@ template< typename T > void convolution(const unsigned int padding, const unsign
 
       for ( unsigned int fY = y; fY < y + filterHeight; fY++ ) {
         for (unsigned int fX = x; fX < x + filterWidth; fX++ ) {
-          sum += input[(fY * isa::utils::pad(width + (2 * (filterWidth - 1)), padding)) + fX] * filter[((fY - y) * filterWidth) + (fX - x)];
+          sum += input[(fY * isa::utils::pad(width + (filterWidth - 1), padding)) + fX] * filter[((fY - y) * filterWidth) + (fX - x)];
         }
       }
       sum /= filterWidth * filterHeight;
@@ -61,11 +61,11 @@ std::string * getConvolutionOpenCL(const bool local, const unsigned int padding,
   std::string defSumsTemplate = dataType + " sumX<%XNUM%>Y<%YNUM%> = 0;\n";
   std::string sumsTemplate = "for ( unsigned int fY = (y + <%YOFFSET%>); fY < (y + <%YOFFSET%>) + " + isa::utils::toString(filterHeight) + "; fY++ ) {\n"
     "for ( unsigned int fX = (x + <%XOFFSET%>); fX < (x + <%XOFFSET%>) + " + isa::utils::toString(filterWidth) + "; fX++ ) {\n"
-    "sumX<%XNUM%>Y<%YNUM%> += input[(fY * " + isa::utils::toString(isa::utils::pad(width + (2 * (filterWidth - 1)), padding)) + ") + fX] * filter[((fY - (y + <%YOFFSET%>)) * " + isa::utils::toString(filterWidth) + ") + (fX - (x + <%XOFFSET%>))];\n"
+    "sumX<%XNUM%>Y<%YNUM%> += input[(fY * " + isa::utils::toString(isa::utils::pad(width + (filterWidth - 1), padding)) + ") + fX] * filter[((fY - (y + <%YOFFSET%>)) * " + isa::utils::toString(filterWidth) + ") + (fX - (x + <%XOFFSET%>))];\n"
     "}\n"
     "}\n";
   std::string averageTemplate = "sumX<%XNUM%>Y<%YNUM%> *= " + isa::utils::toString(1.0f / (filterWidth * filterHeight)) + "f;\n";
-  std::string storeTemplate = "output[((y + <%YOFFSET%>) * " + isa::utils::toString(isa::utils::pad(width + (filterWidth / 2), padding)) + ") + (x + <%XOFFSET%>)] = sumX<%XNUM%>Y<%YNUM%>;\n";
+  std::string storeTemplate = "output[((y + <%YOFFSET%>) * " + isa::utils::toString(isa::utils::pad(width, padding)) + ") + (x + <%XOFFSET%>)] = sumX<%XNUM%>Y<%YNUM%>;\n";
   // End kernel's template
 
   std::string * defSums_s = new std::string();
