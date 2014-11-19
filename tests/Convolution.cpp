@@ -116,7 +116,7 @@ int main(int argc, char *argv[]) {
   }
 
 	// Generate kernel
-  std::string * code = isa::OpenCL::getConvolutionOpenCL(localMem, padding, width, height, filterWidth, filterHeight, nrColumnsPerBlock, nrRowsPerBlock, nrColumnsPerThread, nrRowsPerThread, typeName, observation);
+  std::string * code = isa::OpenCL::getConvolutionOpenCL(localMem, padding, width, height, filterWidth, filterHeight, nrColumnsPerBlock, nrRowsPerBlock, nrColumnsPerThread, nrRowsPerThread, typeName);
   cl::Kernel * kernel;
   if ( print ) {
     std::cout << *code << std::endl;
