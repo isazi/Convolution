@@ -142,12 +142,12 @@ int main(int argc, char * argv[]) {
       }
 
 			for ( unsigned int columnsPerThread = 1; columnsPerThread <= maxItems; columnsPerThread++ ) {
-				if ( (observation.getNrSamplesPerPaddedSecond() % ((*columns) * columnsPerThread)) != 0 ) {
+				if ( (width % ((*columns) * columnsPerThread)) != 0 ) {
 					continue;
 				}
 
 				for ( unsigned int rowsPerThread = 1; rowsPerThread <= maxItems; rowsPerThread++ ) {
-					if ( (observation.getNrBeams() % ((*rows) * rowsPerThread)) != 0 ) {
+					if ( (height % ((*rows) * rowsPerThread)) != 0 ) {
 						continue;
 					} else if ( !localMem && (columnsPerThread * rowsPerThread) + 8 > maxItems ) {
 						break;
@@ -198,7 +198,7 @@ int main(int argc, char * argv[]) {
             continue;
           }
 
-          std::cout << width << " " << hright << " " << filterWidth << " " << filterHeight << " ";
+          std::cout << width << " " << height << " " << filterWidth << " " << filterHeight << " ";
           std::cout << localMem << " " << *columns << " " << *rows << " " << columnsPerThread << " " << rowsPerThread << " ";
           std::cout << std::setprecision(3);
           std::cout << gflops / timer.getAverageTime() << " ";
