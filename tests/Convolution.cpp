@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
   unsigned int width = 0;
   unsigned int height = 0;
   unsigned int filterWidth = 0;
-  unsigned int filterHeight = 0
+  unsigned int filterHeight = 0;
 
   try {
     isa::utils::ArgumentList args(argc, argv);
