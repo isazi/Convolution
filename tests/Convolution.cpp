@@ -99,7 +99,7 @@ int main(int argc, char *argv[]) {
   cl::Buffer input_d, output_d, filter_d;
   try {
     input_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, input.size() * sizeof(dataType), 0, 0);
-    output_d = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, observation.getNrRows() * observation.getNrChannels() * observation.getNrColumnsPerPaddedSecond() * 4 * sizeof(dataType), 0, 0);
+    output_d = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, output.size() * sizeof(dataType), 0, 0);
     filter_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, filter.size() * sizeof(dataType), 0, 0);
   } catch ( cl::Error & err ) {
     std::cerr << "OpenCL error allocating memory: " << isa::utils::toString(err.err()) << "." << std::endl;
