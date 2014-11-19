@@ -80,6 +80,14 @@ int main(int argc, char * argv[]) {
 		return 1;
 	}
 
+	// Initialize OpenCL
+	cl::Context * clContext = new cl::Context();
+	std::vector< cl::Platform > * clPlatforms = new std::vector< cl::Platform >();
+	std::vector< cl::Device > * clDevices = new std::vector< cl::Device >();
+	std::vector< std::vector< cl::CommandQueue > > * clQueues = new std::vector< std::vector < cl::CommandQueue > >();
+
+  isa::OpenCL::initializeOpenCL(clPlatformID, 1, clPlatforms, clContext, clDevices, clQueues);
+
 	// Allocate host memory
   std::vector< dataType > input = std::vector< dataType >((height + (filterHeight - 1)) * isa::utils::pad(width + (filterWidth - 1), padding));
   std::vector< dataType > output = std::vector< dataType >(height * isa::utils::pad(width, padding));
