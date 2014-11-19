@@ -179,7 +179,7 @@ int main(int argc, char * argv[]) {
 
           // Warm-up run
           try {
-            clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local);
+            clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local, 0, &event);
             event.wait();
           } catch ( cl::Error & err ) {
             std::cerr << "OpenCL error kernel execution: " << isa::utils::toString(err.err()) << "." << std::endl;
