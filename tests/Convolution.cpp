@@ -83,9 +83,9 @@ int main(int argc, char *argv[]) {
   isa::OpenCL::initializeOpenCL(clPlatformID, 1, clPlatforms, clContext, clDevices, clQueues);
 
 	// Allocate host memory
-  std::vector< dataType > input = std::vector< dataType >((width + (filterWidth - 1)) * (height + (filterHeight - 1)));
-  std::vector< dataType > output = std::vector< dataType >(width * height);
-  std::vector< dataType > output_c = std::vector< dataType >(width * height);
+  std::vector< dataType > input = std::vector< dataType >((height + (filterHeight - 1)) * isa::utils::pad(width + (filterWidth - 1), padding));
+  std::vector< dataType > output = std::vector< dataType >(height * isa::utils::pad(width, padding));
+  std::vector< dataType > output_c = std::vector< dataType >(height * isa::utils::pad(width, padding));
   std::vector< dataType > filter = std::vector< dataType >(filterWidth * filterHeight);
   if ( random ) {
     std::srand(time(0));
