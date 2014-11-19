@@ -35,11 +35,11 @@ template< typename T > void convolution(const unsigned int padding, const unsign
 
       for (unsigned int fX = x; fX < x + filterWidth; fX++ ) {
         for ( unsigned int fY = y; fY < y + filterHeight; fY++ ) {
-          sum += input[(fX * isa::utils::pad(width + (2 * (filterWidth - 1)), padding)) + fY] * filter[((fX - x) * filterWidth) + (fY - y)];
+          sum += input[(fY * isa::utils::pad(width + (2 * (filterWidth - 1)), padding)) + fX] * filter[((fY - y) * filterWidth) + (fX - x)];
         }
       }
       sum /= filterWidth * filterHeight;
-      output[(x * isa::utils::pad(width, padding)) + y] = sum;
+      output[(y * isa::utils::pad(width, padding)) + x] = sum;
     }
   }
 }
