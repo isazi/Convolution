@@ -146,7 +146,7 @@ int main(int argc, char *argv[]) {
 
   for ( unsigned int y = 0; y < height; y++ ) {
     for ( unsigned int x = 0; x < width; x++ ) {
-      if ( !same(output[(y * isa::utils::pad(width, padding)) + x], output_c[(y * isa::utils::pad(width, padding)) + x]) ) {
+      if ( !isa::utils::same(output[(y * isa::utils::pad(width, padding)) + x], output_c[(y * isa::utils::pad(width, padding)) + x]) ) {
         wrongItems++;
       }
     }
