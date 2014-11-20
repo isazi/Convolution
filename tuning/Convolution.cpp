@@ -149,9 +149,9 @@ int main(int argc, char * argv[]) {
 				for ( unsigned int rowsPerThread = 1; rowsPerThread <= maxItems; rowsPerThread++ ) {
 					if ( (height % ((*rows) * rowsPerThread)) != 0 ) {
 						continue;
-					} else if ( !localMem && (columnsPerThread * rowsPerThread) + 8 > maxItems ) {
+					} else if ( !localMem && (columnsPerThread * rowsPerThread) + 2 > maxItems ) {
 						break;
-					} else if ( localMem ) {
+					} else if ( localMem  && (columnsPerThread * rowsPerThread) + 6 > maxItems ) {
             break;
           }
 
