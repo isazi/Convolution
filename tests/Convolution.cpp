@@ -157,7 +157,7 @@ int main(int argc, char *argv[]) {
   }
 
   if ( wrongItems > 0 ) {
-    std::cout << "Wrong input: " << wrongItems << " (" << (wrongItems * 100.0) / (static_cast< long long unsigned int >(width) * height) << "%)." << std::endl;
+    std::cout << "Wrong items: " << wrongItems << " (" << (wrongItems * 100.0) / (static_cast< long long unsigned int >(width) * height) << "%)." << std::endl;
   } else {
     std::cout << "TEST PASSED." << std::endl;
   }
