@@ -68,7 +68,7 @@ std::string * getConvolutionOpenCL(const bool local, const unsigned int padding,
       "globalItem += " + isa::utils::toString(nrColumnsPerBlock * nrRowsPerBlock) + ";\n"
       "localItem += " + isa::utils::toString(nrColumnsPerBlock * nrRowsPerBlock) + ";\n"
       "}\n"
-      "for ( unsigned int fY = 0; fY < " + isa::utils::toString((nrRowsPerBlock * nrRowsPerThread) + (filterHeight - 1)) + "; fY += " + isa::utils::toString(nrRowsPerBlock) + " ) {\n"
+      "for ( unsigned int fY = get_local_id(1); fY < " + isa::utils::toString((nrRowsPerBlock * nrRowsPerThread) + (filterHeight - 1)) + "; fY += " + isa::utils::toString(nrRowsPerBlock) + " ) {\n"
       "<%LOAD_INPUT%>"
       "}\n"
       "barrier(CLK_LOCAL_MEM_FENCE);\n"
