@@ -92,8 +92,12 @@ int main(int argc, char *argv[]) {
   } else {
     std::srand(42);
   }
-  std::fill(filter.begin(), filter.end(), std::rand() % 100);
-  std::fill(input.begin(), input.end(), std::rand() % 1000);
+  for ( unsigned int i = 0; i < filter.size(); i++ ) {
+    filter[i] = std::rand() % 100;
+  }
+  for ( unsigned int i = 0; i < input.size(); i++ ) {
+    input[i] = std::rand() % 1000;
+  }
 
   // Allocate device memory
   cl::Buffer input_d, output_d, filter_d;
