@@ -69,7 +69,9 @@ std::string * getConvolutionOpenCL(const bool local, const unsigned int padding,
       "localItem += " + isa::utils::toString(nrColumnsPerBlock * nrRowsPerBlock) + ";\n"
       "}\n"
       "for ( unsigned int fY = get_local_id(1); fY < " + isa::utils::toString((nrRowsPerBlock * nrRowsPerThread) + (filterHeight - 1)) + "; fY += " + isa::utils::toString(nrRowsPerBlock) + " ) {\n"
-      "<%LOAD_INPUT%>"
+      "for ( unsigned int fX = get_local_id(0); fX < " + isa::utils::toString((nrColumnsPerBlock * nrColumnsPerThread) + (filterWidth - 1)) + "; fX += " + isa::utils::toString(nrColumnsPerBlock) + " ) {\n"
+      "localInput[(fY * " + isa::utils::toString((nrColumnsPerBlock * nrColumnsPerThread) + (filterWidth - 1)) + ") + fX] = input[((y + fY) * " + isa::utils::toString(isa::utils::pad(width + (filterWidth - 1), padding)) + ") + (x + fX)];\n"
+      "}\n"
       "}\n"
       "barrier(CLK_LOCAL_MEM_FENCE);\n"
       "for ( unsigned int fY = get_local_id(1); fY < get_local_id(1) + " + isa::utils::toString(filterHeight) + "; fY++ ) {\n"
@@ -88,7 +90,6 @@ std::string * getConvolutionOpenCL(const bool local, const unsigned int padding,
     "<%STORE%>"
     "}\n";
   std::string defSumsTemplate = dataType + " sumX<%XNUM%>Y<%YNUM%> = 0;\n";
-  std::string loadInputTemplate = "localInput[(fY * " + isa::utils::toString((nrColumnsPerBlock * nrColumnsPerThread) + (filterWidth - 1)) + ") + get_local_id(0) + <%XOFFSET%>] = input[((y + fY) * " + isa::utils::toString(isa::utils::pad(width + (filterWidth - 1), padding)) + ") + (x + <%XOFFSET%>)];\n";
   std::string sumsTemplate;
   if ( local ) {
     sumsTemplate = "sumX<%XNUM%>Y<%YNUM%> += localInput[((fY + <%YOFFSET%>) * " + isa::utils::toString((nrColumnsPerBlock * nrColumnsPerThread) + (filterWidth - 1)) + ") + (fX + <%XOFFSET%>)] * localFilter[((fY - get_local_id(1)) * " + isa::utils::toString(filterWidth) + ") + (fX - get_local_id(0))];\n";
@@ -134,20 +135,6 @@ std::string * getConvolutionOpenCL(const bool local, const unsigned int padding,
       store_s->append(*temp_s);
       delete temp_s;
     }
-  }
-  if ( local ) {
-    std::string * loadInput_s = new std::string();
-
-    for ( unsigned int x = 0; x < nrColumnsPerThread; x++ ) {
-      std::string xOffset_s = isa::utils::toString(x * nrColumnsPerBlock);
-      std::string * temp_s;
-
-      temp_s = isa::utils::replace(&loadInputTemplate, "<%XOFFSET%>", xOffset_s);
-      loadInput_s->append(*temp_s);
-      delete temp_s;
-    }
-    code = isa::utils::replace(code, "<%LOAD_INPUT%>", *loadInput_s, true);
-    delete loadInput_s;
   }
 
   code = isa::utils::replace(code, "<%DEF_SUMS%>", *defSums_s, true);
