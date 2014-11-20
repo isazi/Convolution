@@ -157,7 +157,12 @@ int main(int argc, char * argv[]) {
 
           // Generate kernel
           double gflops = isa::utils::giga((static_cast< long long unsigned int >(width) * height * filterWidth * filterHeight) + (static_cast< long long unsigned int >(width) * height));
-          double gbs = isa::utils::giga((static_cast< long long unsigned int >(width) * height * filterWidth * filterHeight * 2 * sizeof(dataType)) + (static_cast< long long unsigned int >(width) * height * sizeof(dataType)));
+          double gbs;
+          if ( localMem ) {
+            gbs = isa::utils::giga((static_cast< long long unsigned int >(width / (*columns * columnsPerThread)) * (height / (*rows * rowsPerThread)) * (((*columns * columnsPerThread) + (filterWidth - 1)) * ((*rows * rowsPerThread) + (filterHeight - 1))) * sizeof(dataType)) + (static_cast< long long unsigned int >(width) * height * sizeof(dataType)) + (static_cast< long long unsigned int >(width / (*columns * columnsPerThread)) * (height / (*rows * rowsPerThread)) * filterWidth * filterHeight * sizeof(dataType)));
+          } else {
+            gbs = isa::utils::giga((static_cast< long long unsigned int >(width) * height * filterWidth * filterHeight * 2 * sizeof(dataType)) + (static_cast< long long unsigned int >(width) * height * sizeof(dataType)));
+          }
           isa::utils::Timer timer;
           cl::Event event;
           cl::Kernel * kernel;
