@@ -88,7 +88,7 @@ std::string * getConvolutionOpenCL(const bool local, const unsigned int padding,
     "<%STORE%>"
     "}\n";
   std::string defSumsTemplate = dataType + " sumX<%XNUM%>Y<%YNUM%> = 0;\n";
-  std::string loadInputTemplate = "localInput[(fY * " + isa::utils::toString((nrColumnsPerBlock * nrColumnsPerThread) + (filterWidth - 1)) + ") + get_local_id(0) + <%XOFFSET%>] = input[(y * " + isa::utils::toString(isa::utils::pad(width + (filterWidth - 1), padding)) + ") + (x + <%XOFFSET%>)];\n";
+  std::string loadInputTemplate = "localInput[(fY * " + isa::utils::toString((nrColumnsPerBlock * nrColumnsPerThread) + (filterWidth - 1)) + ") + get_local_id(0) + <%XOFFSET%>] = input[((y + fY) * " + isa::utils::toString(isa::utils::pad(width + (filterWidth - 1), padding)) + ") + (x + <%XOFFSET%>)];\n";
   std::string sumsTemplate;
   if ( local ) {
     sumsTemplate = "sumX<%XNUM%>Y<%YNUM%> += localInput[((fY + <%YOFFSET%>) * " + isa::utils::toString((nrColumnsPerBlock * nrColumnsPerThread) + (filterWidth - 1)) + ") + (fX + <%XOFFSET%>)] * localFilter[((fY - get_local_id(1)) * " + isa::utils::toString(filterWidth) + ") + (fX - get_local_id(0))];\n";
