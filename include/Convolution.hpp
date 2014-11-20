@@ -71,27 +71,29 @@ std::string * getConvolutionOpenCL(const bool local, const unsigned int padding,
       "for ( unsigned int fY = 0; fY < " + isa::utils::toString((nrRowsPerBlock * nrRowsPerThread) + (filterHeight - 1)) + "; fY += " + isa::utils::toString(nrRowsPerBlock) + " ) {\n"
       "<%LOAD_INPUT%>"
       "}\n"
-      "barrier(CLK_LOCAL_MEM_FENCE);\n";
+      "barrier(CLK_LOCAL_MEM_FENCE);\n"
+      "<%SUMS%>";
+  } else {
+    *code += "for ( unsigned int fY = y; fY < y + " + isa::utils::toString(filterHeight) + "; fY++ ) {\n"
+      "for ( unsigned int fX = x; fX < x + " + isa::utils::toString(filterWidth) + "; fX++ ) {\n"
+      "<%SUMS%>"
+      "}\n"
+      "}\n";
   }
-  *code += "<%SUMS%>"
-    "<%AVERAGE%>"
+  *code += "<%AVERAGE%>"
     "<%STORE%>"
     "}\n";
   std::string defSumsTemplate = dataType + " sumX<%XNUM%>Y<%YNUM%> = 0;\n";
   std::string loadInputTemplate = "localInput[(fY * " + isa::utils::toString((nrColumnsPerBlock * nrColumnsPerThread) + (filterWidth - 1)) + ") + get_local_id(0) + <%XOFFSET%>] = input[(y * " + isa::utils::toString(isa::utils::pad(width + (filterWidth - 1), padding)) + ") + (x + <%XOFFSET%>)];\n";
   std::string sumsTemplate;
   if ( local ) {
-    sumsTemplate = "for ( unsigned int fY = get_local_id(1); fY < " + isa::utils::toString(filterHeight) + "; fY++ ) {\n"
-      "for ( unsigned int fX = get_local_id(0); fX < " + isa::utils::toString(filterWidth) + "; fX++ ) {\n"
+    sumsTemplate = "for ( unsigned int fY = get_local_id(1); fY < get_local_id(1) + " + isa::utils::toString(filterHeight) + "; fY++ ) {\n"
+      "for ( unsigned int fX = get_local_id(0); fX < get_local_id(0) + " + isa::utils::toString(filterWidth) + "; fX++ ) {\n"
       "sumX<%XNUM%>Y<%YNUM%> += localInput[((fY + <%YOFFSET%>) * " + isa::utils::toString((nrColumnsPerBlock * nrColumnsPerThread) + (filterWidth - 1)) + ") + (fX + <%XOFFSET%>)] * localFilter[((fY - get_local_id(1)) * " + isa::utils::toString(filterWidth) + ") + (fX - get_local_id(0))];\n"
       "}\n"
       "}\n";
   } else {
-    sumsTemplate = "for ( unsigned int fY = (y + <%YOFFSET%>); fY < (y + <%YOFFSET%>) + " + isa::utils::toString(filterHeight) + "; fY++ ) {\n"
-      "for ( unsigned int fX = (x + <%XOFFSET%>); fX < (x + <%XOFFSET%>) + " + isa::utils::toString(filterWidth) + "; fX++ ) {\n"
-      "sumX<%XNUM%>Y<%YNUM%> += input[(fY * " + isa::utils::toString(isa::utils::pad(width + (filterWidth - 1), padding)) + ") + fX] * filter[((fY - (y + <%YOFFSET%>)) * " + isa::utils::toString(filterWidth) + ") + (fX - (x + <%XOFFSET%>))];\n"
-      "}\n"
-      "}\n";
+    sumsTemplate =  "sumX<%XNUM%>Y<%YNUM%> += input[((fY + <%YOFFSET%>) * " + isa::utils::toString(isa::utils::pad(width + (filterWidth - 1), padding)) + ") + (fX + <%XOFFSET%>)] * filter[((fY - y) * " + isa::utils::toString(filterWidth) + ") + (fX - x)];\n";
   }
   std::string averageTemplate = "sumX<%XNUM%>Y<%YNUM%> *= " + isa::utils::toString(1.0f / (filterWidth * filterHeight)) + "f;\n";
   std::string storeTemplate = "output[((y + <%YOFFSET%>) * " + isa::utils::toString(isa::utils::pad(width, padding)) + ") + (x + <%XOFFSET%>)] = sumX<%XNUM%>Y<%YNUM%>;\n";
