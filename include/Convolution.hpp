@@ -54,10 +54,10 @@ std::string * getConvolutionOpenCL(const bool local, const unsigned int padding,
   if ( local ) {
     *code += "const unsigned int x = (get_group_id(0) * " + isa::utils::toString(nrColumnsPerBlock * nrColumnsPerThread) + ");\n"
     "const unsigned int y = (get_group_id(1) * " + isa::utils::toString(nrRowsPerBlock * nrRowsPerThread) + ");\n";
-    if ( nrColumnsPerBlock < padding  ) {
+    if ( nrColumnsPerBlock < padding ) {
       *code += "__local " + dataType + " localInput[" + isa::utils::toString(isa::utils::pad((nrColumnsPerBlock * nrColumnsPerThread) + (filterWidth - 1), padding) * ((nrRowsPerBlock * nrRowsPerThread) + (filterHeight - 1))) + "];\n";
     } else {
-      *code += "__local " + dataType + " localInput[" + isa::utils::toString((nrColumnsPerBlock * nrColumnsPerThread) + (filterWidth - 1) * ((nrRowsPerBlock * nrRowsPerThread) + (filterHeight - 1))) + "];\n";
+      *code += "__local " + dataType + " localInput[" + isa::utils::toString(((nrColumnsPerBlock * nrColumnsPerThread) + (filterWidth - 1)) * ((nrRowsPerBlock * nrRowsPerThread) + (filterHeight - 1))) + "];\n";
     }
   } else {
     *code += "const unsigned int x = (get_group_id(0) * " + isa::utils::toString(nrColumnsPerBlock * nrColumnsPerThread) + ") + get_local_id(0);\n"
