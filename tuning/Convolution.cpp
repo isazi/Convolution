@@ -171,6 +171,7 @@ int main(int argc, char * argv[]) {
           try {
             kernel = isa::OpenCL::compile("convolution", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
           } catch ( isa::OpenCL::OpenCLError & err ) {
+            std::cerr << *columns << ", " << *rows << ", " << columnsPerThread << ", " << rowsPerThread << std::endl;
             std::cerr << err.what() << std::endl;
             continue;
           }
@@ -187,6 +188,7 @@ int main(int argc, char * argv[]) {
             clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local, 0, &event);
             event.wait();
           } catch ( cl::Error & err ) {
+            std::cerr << *columns << ", " << *rows << ", " << columnsPerThread << ", " << rowsPerThread << std::endl;
             std::cerr << "OpenCL error kernel execution: " << isa::utils::toString(err.err()) << "." << std::endl;
             continue;
           }
@@ -199,6 +201,7 @@ int main(int argc, char * argv[]) {
               timer.stop();
             }
           } catch ( cl::Error & err ) {
+            std::cerr << *columns << ", " << *rows << ", " << columnsPerThread << ", " << rowsPerThread << std::endl;
             std::cerr << "OpenCL error kernel execution: " << isa::utils::toString(err.err()) << "." << std::endl;
             continue;
           }
