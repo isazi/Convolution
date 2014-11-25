@@ -50,17 +50,20 @@ std::string * getConvolutionOpenCL(const bool local, const unsigned int padding,
   std::string * code = new std::string();
 
   // Begin kernel's template
-  *code = "__kernel void convolution(__global const " + dataType + " * const restrict input, __global " + dataType + " * const restrict output, __constant const " + dataType + " * const restrict filter) {\n"
-    "const unsigned int x = (get_group_id(0) * " + isa::utils::toString(nrColumnsPerBlock * nrColumnsPerThread) + ") + get_local_id(0);\n"
-    "const unsigned int y = (get_group_id(1) * " + isa::utils::toString(nrRowsPerBlock * nrRowsPerThread) + ") + get_local_id(1);\n";
+  *code = "__kernel void convolution(__global const " + dataType + " * const restrict input, __global " + dataType + " * const restrict output, __constant const " + dataType + " * const restrict filter) {\n";
   if ( local ) {
-    *code += "unsigned int fX = 0;\n"
+    *code += "const unsigned int x = (get_group_id(0) * " + isa::utils::toString(nrColumnsPerBlock * nrColumnsPerThread) + ") + get_local_id(0);\n"
+      "const unsigned int y = (get_group_id(1) * " + isa::utils::toString(nrRowsPerBlock * nrRowsPerThread) + ") + get_local_id(1);\n"
+      "unsigned int fX = 0;\n"
       "unsigned int fY = 0;\n";
     if ( nrColumnsPerBlock < padding ) {
       *code += "__local " + dataType + " localInput[" + isa::utils::toString(isa::utils::pad((nrColumnsPerBlock * nrColumnsPerThread) + (filterWidth - 1), padding) * ((nrRowsPerBlock * nrRowsPerThread) + (filterHeight - 1))) + "];\n";
     } else {
       *code += "__local " + dataType + " localInput[" + isa::utils::toString(((nrColumnsPerBlock * nrColumnsPerThread) + (filterWidth - 1)) * ((nrRowsPerBlock * nrRowsPerThread) + (filterHeight - 1))) + "];\n";
     }
+  } else {
+    *code += "const unsigned int x = (get_group_id(0) * " + isa::utils::toString(nrColumnsPerBlock * nrColumnsPerThread) + ");\n"
+      "const unsigned int y = (get_group_id(1) * " + isa::utils::toString(nrRowsPerBlock * nrRowsPerThread) + ");\n";
   }
   *code += "<%DEF_SUMS%>";
   if ( local ) {
