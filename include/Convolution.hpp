@@ -179,13 +179,13 @@ std::string * getConvolutionOpenCL(const bool local, const unsigned int padding,
             delete temp_s;
           }
         }
-        if ( i != static_cast< unsigned int >(std::ceil(((nrColumnsPerBlock * nrColumnsPerThread) + (filterWidth - 1)) / static_cast< float >(nrColumnsPerBlock * nrColumnsPerThread))) - 1 ) {
-          load_s->append(loadXIncTemplate);
-        }
       }
-      if ( j != static_cast< unsigned int >(std::ceil(((nrRowsPerBlock * nrRowsPerThread) + (filterHeight - 1)) / static_cast< float >(nrRowsPerBlock * nrRowsPerThread))) - 1 ) {
-        load_s->append(loadYIncTemplate);
+      if ( i != static_cast< unsigned int >(std::ceil(((nrColumnsPerBlock * nrColumnsPerThread) + (filterWidth - 1)) / static_cast< float >(nrColumnsPerBlock * nrColumnsPerThread))) - 1 ) {
+        load_s->append(loadXIncTemplate);
       }
+    }
+    if ( j != static_cast< unsigned int >(std::ceil(((nrRowsPerBlock * nrRowsPerThread) + (filterHeight - 1)) / static_cast< float >(nrRowsPerBlock * nrRowsPerThread))) - 1 ) {
+      load_s->append(loadYIncTemplate);
     }
   }
 
