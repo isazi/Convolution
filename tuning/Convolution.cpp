@@ -151,7 +151,7 @@ int main(int argc, char * argv[]) {
 						continue;
 					} else if ( !localMem && (columnsPerThread * rowsPerThread) + 2 > maxItems ) {
 						break;
-					} else if ( localMem  && (columnsPerThread * rowsPerThread) + 3 > maxItems ) {
+					} else if ( localMem  && (columnsPerThread * rowsPerThread) + 5 > maxItems ) {
             break;
           }
 
