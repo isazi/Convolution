@@ -160,24 +160,22 @@ std::string * getConvolutionOpenCL(const bool local, const unsigned int padding,
         std::string yOffset_s = isa::utils::toString(y * nrRowsPerBlock);
 
         for ( unsigned int x = 0; x < nrColumnsPerThread; x++ ) {
-          if( ((x * nrColumnsPerBlock) < columns) && ((y * nrRowsPerBlock) < rows) ) {
-            std::string xOffset_s = isa::utils::toString(x * nrColumnsPerBlock);
-            std::string * temp_s = new std::string();
+          std::string xOffset_s = isa::utils::toString(x * nrColumnsPerBlock);
+          std::string * temp_s = new std::string();
 
-            if ( (j == static_cast< unsigned int >(std::ceil(((nrRowsPerBlock * nrRowsPerThread) + (filterHeight - 1)) / static_cast< float >(nrRowsPerBlock * nrRowsPerThread))) - 1) && (i == static_cast< unsigned int >(std::ceil(((nrColumnsPerBlock * nrColumnsPerThread) + (filterWidth - 1)) / static_cast< float >(nrColumnsPerBlock * nrColumnsPerThread))) - 1) ){
-              temp_s->append("if ( fY < " + isa::utils::toString(rows) + " && fX < " + isa::utils::toString(columns) + " ) {\n" + loadTemplate + "}\n");
-            } else if ( j == static_cast< unsigned int >(std::ceil(((nrRowsPerBlock * nrRowsPerThread) + (filterHeight - 1)) / static_cast< float >(nrRowsPerBlock * nrRowsPerThread))) - 1 ) {
-              temp_s->append("if ( fY < " + isa::utils::toString(rows) + " ) {\n" + loadTemplate + "}\n");
-            } else if ( i == static_cast< unsigned int >(std::ceil(((nrColumnsPerBlock * nrColumnsPerThread) + (filterWidth - 1)) / static_cast< float >(nrColumnsPerBlock * nrColumnsPerThread))) - 1 ) {
-              temp_s->append("if ( fX < " + isa::utils::toString(columns) + " ) {\n" + loadTemplate + "}\n");
-            } else {
-              temp_s->append(loadTemplate);
-            }
-            temp_s = isa::utils::replace(temp_s, "<%XOFFSET%>", xOffset_s, true);
-            temp_s = isa::utils::replace(temp_s, "<%YOFFSET%>", yOffset_s, true);
-            load_s->append(*temp_s);
-            delete temp_s;
+          if ( (j == static_cast< unsigned int >(std::ceil(((nrRowsPerBlock * nrRowsPerThread) + (filterHeight - 1)) / static_cast< float >(nrRowsPerBlock * nrRowsPerThread))) - 1) && (i == static_cast< unsigned int >(std::ceil(((nrColumnsPerBlock * nrColumnsPerThread) + (filterWidth - 1)) / static_cast< float >(nrColumnsPerBlock * nrColumnsPerThread))) - 1) ){
+            temp_s->append("if ( (fY + <%YOFFSET%>) < " + isa::utils::toString(rows) + " && (fX + <%XOFFSET%>) < " + isa::utils::toString(columns) + " ) {\n" + loadTemplate + "}\n");
+          } else if ( j == static_cast< unsigned int >(std::ceil(((nrRowsPerBlock * nrRowsPerThread) + (filterHeight - 1)) / static_cast< float >(nrRowsPerBlock * nrRowsPerThread))) - 1 ) {
+            temp_s->append("if ( (fY + <%YOFFSET%>) < " + isa::utils::toString(rows) + " ) {\n" + loadTemplate + "}\n");
+          } else if ( i == static_cast< unsigned int >(std::ceil(((nrColumnsPerBlock * nrColumnsPerThread) + (filterWidth - 1)) / static_cast< float >(nrColumnsPerBlock * nrColumnsPerThread))) - 1 ) {
+            temp_s->append("if ( (fX + <%XOFFSET%>) < " + isa::utils::toString(columns) + " ) {\n" + loadTemplate + "}\n");
+          } else {
+            temp_s->append(loadTemplate);
           }
+          temp_s = isa::utils::replace(temp_s, "<%XOFFSET%>", xOffset_s, true);
+          temp_s = isa::utils::replace(temp_s, "<%YOFFSET%>", yOffset_s, true);
+          load_s->append(*temp_s);
+          delete temp_s;
         }
       }
       if ( i != static_cast< unsigned int >(std::ceil(((nrColumnsPerBlock * nrColumnsPerThread) + (filterWidth - 1)) / static_cast< float >(nrColumnsPerBlock * nrColumnsPerThread))) - 1 ) {
