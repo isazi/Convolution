@@ -103,6 +103,7 @@ std::string * getConvolutionOpenCL(const bool local, const unsigned int padding,
   }
   std::string loadYIncTemplate = "fY += " + isa::utils::toString(nrRowsPerBlock * nrRowsPerThread) + ";\n";
   std::string loadXIncTemplate = "fX += " + isa::utils::toString(nrColumnsPerBlock * nrColumnsPerThread) + ";\n";
+  std::string loadXResetTemplate = "fX = get_local_id(0);\n";
   std::string averageTemplate = "sumX<%XNUM%>Y<%YNUM%> *= " + isa::utils::toString(1.0f / (filterWidth * filterHeight)) + "f;\n";
   std::string storeTemplate;
   if ( local ) {
@@ -184,6 +185,7 @@ std::string * getConvolutionOpenCL(const bool local, const unsigned int padding,
     }
     if ( j != static_cast< unsigned int >(std::ceil(((nrRowsPerBlock * nrRowsPerThread) + (filterHeight - 1)) / static_cast< float >(nrRowsPerBlock * nrRowsPerThread))) - 1 ) {
       load_s->append(loadYIncTemplate);
+      load_s->append(loadXResetTemplate);
     }
   }
 
