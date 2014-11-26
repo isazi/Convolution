@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <string>
+#include <cmath>
 
 #include <utils.hpp>
 
@@ -100,8 +101,8 @@ std::string * getConvolutionOpenCL(const bool local, const unsigned int padding,
   } else {
     sumsTemplate =  "sumX<%XNUM%>Y<%YNUM%> += input[((fY + <%YOFFSET%>) * " + isa::utils::toString(isa::utils::pad(width + (filterWidth - 1), padding)) + ") + (fX + <%XOFFSET%>)] * filter[((fY - y) * " + isa::utils::toString(filterWidth) + ") + (fX - x)];\n";
   }
-  std::string loadIncTemplate = "fY += " + isa::utils::toString(nrRowsPerBlock * nrRowsPerThread) + ";\n"
-    "fX += " + isa::utils::toString(nrColumnsPerBlock * nrColumnsPerThread) + ";\n";
+  std::string loadYIncTemplate = "fY += " + isa::utils::toString(nrRowsPerBlock * nrRowsPerThread) + ";\n";
+  std::string loadXIncTemplate = "fX += " + isa::utils::toString(nrColumnsPerBlock * nrColumnsPerThread) + ";\n";
   std::string averageTemplate = "sumX<%XNUM%>Y<%YNUM%> *= " + isa::utils::toString(1.0f / (filterWidth * filterHeight)) + "f;\n";
   std::string storeTemplate;
   if ( local ) {
@@ -130,10 +131,6 @@ std::string * getConvolutionOpenCL(const bool local, const unsigned int padding,
       temp_s = isa::utils::replace(temp_s, "<%YNUM%>", y_s, true);
       defSums_s->append(*temp_s);
       delete temp_s;
-      temp_s = isa::utils::replace(&loadTemplate, "<%XOFFSET%>", xOffset_s);
-      temp_s = isa::utils::replace(temp_s, "<%YOFFSET%>", yOffset_s, true);
-      load_s->append(*temp_s);
-      delete temp_s;
       temp_s = isa::utils::replace(&sumsTemplate, "<%XNUM%>", x_s);
       temp_s = isa::utils::replace(temp_s, "<%YNUM%>", y_s, true);
       temp_s = isa::utils::replace(temp_s, "<%XOFFSET%>", xOffset_s, true);
@@ -151,7 +148,36 @@ std::string * getConvolutionOpenCL(const bool local, const unsigned int padding,
       store_s->append(*temp_s);
       delete temp_s;
     }
-    load_s->append(loadIncTemplate);
+  }
+  
+  for ( unsigned int j = 0; j < static_cast< unsigned int >(std::ceil(((nrRowsPerBlock * nrRowsPerThread) + (filterHeight - 1)) / (nrRowsPerBlock * nrRowsPerThread))); j++ ) {
+    const unsigned int rows = (nrRowsPerBlock * nrRowsPerThread) + (filterHeight - 1);
+
+    for ( unsigned int i = 0; i < static_cast< unsigned int >(std::ceil(((nrColumnsPerBlock * nrColumnsPerThread) + (filterWidth - 1)) / (nrColumnsPerBlock * nrColumnsPerThread))); i++ ) {
+      const unsigned int columns = (nrColumnsPerBlock * nrColumnsPerThread) + (filterWidth - 1);
+
+      for ( unsigned int y = 0; y < nrRowsPerThread; y++ ) {
+        std::string yOffset_s = isa::utils::toString(y * nrRowsPerBlock);
+
+        for ( unsigned int x = 0; x < nrColumnsPerThread; x++ ) {
+          if( ((x * nrColumnsPerBlock) < columns) && ((y * nrRowsPerBlock) < rows) ) {
+            std::string xOffset_s = isa::utils::toString(x * nrColumnsPerBlock);
+            std::string * temp_s = 0;
+
+            temp_s = isa::utils::replace(&loadTemplate, "<%XOFFSET%>", xOffset_s);
+            temp_s = isa::utils::replace(temp_s, "<%YOFFSET%>", yOffset_s, true);
+            load_s->append(*temp_s);
+            delete temp_s;
+          }
+        }
+        if ( i != static_cast< unsigned int >(std::ceil(((nrColumnsPerBlock * nrColumnsPerThread) + (filterWidth - 1)) / (nrColumnsPerBlock * nrColumnsPerThread))) - 1 ) {
+          load_s->append(loadXIncTemplate);
+        }
+      }
+      if ( j != static_cast< unsigned int >(std::ceil(((nrRowsPerBlock * nrRowsPerThread) + (filterHeight - 1)) / (nrRowsPerBlock * nrRowsPerThread))) - 1 ) {
+        load_s->append(loadYIncTemplate);
+      }
+    }
   }
 
   code = isa::utils::replace(code, "<%DEF_SUMS%>", *defSums_s, true);
