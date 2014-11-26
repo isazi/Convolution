@@ -150,10 +150,10 @@ std::string * getConvolutionOpenCL(const bool local, const unsigned int padding,
     }
   }
   
-  for ( unsigned int j = 0; j <= static_cast< unsigned int >(std::ceil(((nrRowsPerBlock * nrRowsPerThread) + (filterHeight - 1)) / (nrRowsPerBlock * nrRowsPerThread))); j++ ) {
+  for ( unsigned int j = 0; j < static_cast< unsigned int >(std::ceil(((nrRowsPerBlock * nrRowsPerThread) + (filterHeight - 1)) / static_cast< float >(nrRowsPerBlock * nrRowsPerThread))); j++ ) {
     const unsigned int rows = (nrRowsPerBlock * nrRowsPerThread) + (filterHeight - 1);
 
-    for ( unsigned int i = 0; i <= static_cast< unsigned int >(std::ceil(((nrColumnsPerBlock * nrColumnsPerThread) + (filterWidth - 1)) / (nrColumnsPerBlock * nrColumnsPerThread))); i++ ) {
+    for ( unsigned int i = 0; i < static_cast< unsigned int >(std::ceil(((nrColumnsPerBlock * nrColumnsPerThread) + (filterWidth - 1)) / static_cast< float >(nrColumnsPerBlock * nrColumnsPerThread))); i++ ) {
       const unsigned int columns = (nrColumnsPerBlock * nrColumnsPerThread) + (filterWidth - 1);
 
       for ( unsigned int y = 0; y < nrRowsPerThread; y++ ) {
@@ -170,11 +170,11 @@ std::string * getConvolutionOpenCL(const bool local, const unsigned int padding,
             delete temp_s;
           }
         }
-        if ( i != static_cast< unsigned int >(std::ceil(((nrColumnsPerBlock * nrColumnsPerThread) + (filterWidth - 1)) / (nrColumnsPerBlock * nrColumnsPerThread))) ) {
+        if ( i != static_cast< unsigned int >(std::ceil(((nrColumnsPerBlock * nrColumnsPerThread) + (filterWidth - 1)) / static_cast< float >(nrColumnsPerBlock * nrColumnsPerThread))) - 1 ) {
           load_s->append(loadXIncTemplate);
         }
       }
-      if ( j != static_cast< unsigned int >(std::ceil(((nrRowsPerBlock * nrRowsPerThread) + (filterHeight - 1)) / (nrRowsPerBlock * nrRowsPerThread))) ) {
+      if ( j != static_cast< unsigned int >(std::ceil(((nrRowsPerBlock * nrRowsPerThread) + (filterHeight - 1)) / static_cast< float >(nrRowsPerBlock * nrRowsPerThread))) - 1 ) {
         load_s->append(loadYIncTemplate);
       }
     }
