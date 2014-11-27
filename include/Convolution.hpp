@@ -216,7 +216,6 @@ std::string * getConvolutionOpenCL(const bool local, const unsigned int padding,
   delete defSums_s;
   delete load_s;
   delete sums_s;
-  delete average_s;
   delete store_s;
 
   return code;
