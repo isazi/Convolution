@@ -83,8 +83,7 @@ std::string * getConvolutionOpenCL(const bool local, const unsigned int padding,
       "}\n"
       "}\n";
   }
-  *code += "<%AVERAGE%>"
-    "<%STORE%>"
+  *code += "<%STORE%>"
     "}\n";
   std::string defSumsTemplate = dataType + " sumX<%XNUM%>Y<%YNUM%> = 0;\n";
   std::string loadTemplate;
@@ -104,19 +103,17 @@ std::string * getConvolutionOpenCL(const bool local, const unsigned int padding,
   std::string loadXIncTemplate = "fX += " + isa::utils::toString(nrColumnsPerBlock * nrColumnsPerThread) + ";\n";
   std::string xResetTemplate = "fX = get_local_id(0);\n";
   std::string sumXIncTemplate = "fX++;\n";
-  std::string averageTemplate = "sumX<%XNUM%>Y<%YNUM%> *= " + isa::utils::toString(1.0f / (filterWidth * filterHeight)) + "f;\n";
   std::string storeTemplate;
   if ( local ) {
-    storeTemplate = "output[((y + get_local_id(1) + <%YOFFSET%>) * " + isa::utils::toString(isa::utils::pad(width, padding)) + ") + (x + get_local_id(0) + <%XOFFSET%>)] = sumX<%XNUM%>Y<%YNUM%>;\n";
+    storeTemplate = "output[((y + get_local_id(1) + <%YOFFSET%>) * " + isa::utils::toString(isa::utils::pad(width, padding)) + ") + (x + get_local_id(0) + <%XOFFSET%>)] = sumX<%XNUM%>Y<%YNUM%> * " + isa::utils::toString(1.0f / (filterWidth * filterHeight)) + "f;\n";
   } else {
-    storeTemplate = "output[((y + <%YOFFSET%>) * " + isa::utils::toString(isa::utils::pad(width, padding)) + ") + (x + <%XOFFSET%>)] = sumX<%XNUM%>Y<%YNUM%>;\n";
+    storeTemplate = "output[((y + <%YOFFSET%>) * " + isa::utils::toString(isa::utils::pad(width, padding)) + ") + (x + <%XOFFSET%>)] = sumX<%XNUM%>Y<%YNUM%> * " + isa::utils::toString(1.0f / (filterWidth * filterHeight)) + "f;\n";
   }
   // End kernel's template
 
   std::string * defSums_s = new std::string();
   std::string * load_s = new std::string();
   std::string * sums_s = new std::string();
-  std::string * average_s = new std::string();
   std::string * store_s = new std::string();
 
   for ( unsigned int y = 0; y < nrRowsPerThread; y++ ) {
@@ -140,10 +137,6 @@ std::string * getConvolutionOpenCL(const bool local, const unsigned int padding,
         sums_s->append(*temp_s);
         delete temp_s;
       }
-      temp_s = isa::utils::replace(&averageTemplate, "<%XNUM%>", x_s);
-      temp_s = isa::utils::replace(temp_s, "<%YNUM%>", y_s, true);
-      average_s->append(*temp_s);
-      delete temp_s;
       temp_s = isa::utils::replace(&storeTemplate, "<%XNUM%>", x_s);
       temp_s = isa::utils::replace(temp_s, "<%YNUM%>", y_s, true);
       temp_s = isa::utils::replace(temp_s, "<%XOFFSET%>", xOffset_s, true);
@@ -219,7 +212,6 @@ std::string * getConvolutionOpenCL(const bool local, const unsigned int padding,
   code = isa::utils::replace(code, "<%DEF_SUMS%>", *defSums_s, true);
   code = isa::utils::replace(code, "<%LOAD%>", *load_s, true);
   code = isa::utils::replace(code, "<%SUMS%>", *sums_s, true);
-  code = isa::utils::replace(code, "<%AVERAGE%>", *average_s, true);
   code = isa::utils::replace(code, "<%STORE%>", *store_s, true);
   delete defSums_s;
   delete load_s;
