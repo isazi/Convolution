@@ -128,14 +128,6 @@ std::string * getConvolutionOpenCL(const bool local, const unsigned int padding,
       temp_s = isa::utils::replace(temp_s, "<%YNUM%>", y_s, true);
       defSums_s->append(*temp_s);
       delete temp_s;
-      if ( !local ) {
-        temp_s = isa::utils::replace(&sumsTemplate, "<%XNUM%>", x_s);
-        temp_s = isa::utils::replace(temp_s, "<%YNUM%>", y_s, true);
-        temp_s = isa::utils::replace(temp_s, "<%XOFFSET%>", xOffset_s, true);
-        temp_s = isa::utils::replace(temp_s, "<%YOFFSET%>", yOffset_s, true);
-        sums_s->append(*temp_s);
-        delete temp_s;
-      }
       temp_s = isa::utils::replace(&storeTemplate, "<%XNUM%>", x_s);
       temp_s = isa::utils::replace(temp_s, "<%YNUM%>", y_s, true);
       temp_s = isa::utils::replace(temp_s, "<%XOFFSET%>", xOffset_s, true);
