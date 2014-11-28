@@ -78,9 +78,8 @@ std::string * getConvolutionOpenCL(const bool local, const unsigned int padding,
       "}\n";
   } else {
     *code += "for ( unsigned int fY = y; fY < y + " + isa::utils::toString(filterHeight) + "; fY++ ) {\n"
-      "for ( unsigned int fX = x; fX < x + " + isa::utils::toString(filterWidth) + "; fX++ ) {\n"
+      "unsigned int fX = x;\n"
       "<%SUMS%>"
-      "}\n"
       "}\n";
   }
   *code += "<%STORE%>"
@@ -184,28 +183,26 @@ std::string * getConvolutionOpenCL(const bool local, const unsigned int padding,
     }
   }
 
-  if ( local ) {
-    for ( unsigned int i = 0; i < filterWidth; i++ ) {
-      for ( unsigned int y = 0; y < nrRowsPerThread; y++ ) {
-        std::string y_s = isa::utils::toString(y);
-        std::string yOffset_s = isa::utils::toString(y * nrRowsPerBlock);
+  for ( unsigned int i = 0; i < filterWidth; i++ ) {
+    for ( unsigned int y = 0; y < nrRowsPerThread; y++ ) {
+      std::string y_s = isa::utils::toString(y);
+      std::string yOffset_s = isa::utils::toString(y * nrRowsPerBlock);
 
-        for ( unsigned int x = 0; x < nrColumnsPerThread; x++ ) {
-          std::string x_s = isa::utils::toString(x);
-          std::string xOffset_s = isa::utils::toString(x * nrColumnsPerBlock);
-          std::string * temp_s = 0;
+      for ( unsigned int x = 0; x < nrColumnsPerThread; x++ ) {
+        std::string x_s = isa::utils::toString(x);
+        std::string xOffset_s = isa::utils::toString(x * nrColumnsPerBlock);
+        std::string * temp_s = 0;
 
-          temp_s = isa::utils::replace(&sumsTemplate, "<%XNUM%>", x_s);
-          temp_s = isa::utils::replace(temp_s, "<%YNUM%>", y_s, true);
-          temp_s = isa::utils::replace(temp_s, "<%XOFFSET%>", xOffset_s, true);
-          temp_s = isa::utils::replace(temp_s, "<%YOFFSET%>", yOffset_s, true);
-          sums_s->append(*temp_s);
-          delete temp_s;
-        }
+        temp_s = isa::utils::replace(&sumsTemplate, "<%XNUM%>", x_s);
+        temp_s = isa::utils::replace(temp_s, "<%YNUM%>", y_s, true);
+        temp_s = isa::utils::replace(temp_s, "<%XOFFSET%>", xOffset_s, true);
+        temp_s = isa::utils::replace(temp_s, "<%YOFFSET%>", yOffset_s, true);
+        sums_s->append(*temp_s);
+        delete temp_s;
       }
-      if ( i != filterWidth - 1 ) {
-        sums_s->append(sumXIncTemplate);
-      }
+    }
+    if ( i != filterWidth - 1 ) {
+      sums_s->append(sumXIncTemplate);
     }
   }
 
