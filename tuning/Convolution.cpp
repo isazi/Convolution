@@ -175,6 +175,7 @@ int main(int argc, char * argv[]) {
             std::cerr << err.what() << std::endl;
             continue;
           }
+          delete code;
 
           cl::NDRange global(width / columnsPerThread, height / rowsPerThread);
           cl::NDRange local(*columns, *rows);
